@@ -7,6 +7,12 @@ A machine learning project comparing four classification models for lung cancer 
 1. Create a virtual environment:
    ```bash
    python -m venv venv
+   
+   # Windows
+   venv\Scripts\activate
+   
+   # Linux/MacOS
+   source venv/bin/activate
    ```
 
 2. Install dependencies:
@@ -54,5 +60,5 @@ python main.py predict --input my_data.csv --output result.csv
 
 - **Minimum**: CPU with 4GB RAM
 - **Recommended**: GPU support is optional but can speed up ANN training.
-- **Project Structure**: Designed to run efficiently on standard CPUs.
+- **Project Structure**: Very modular and easy to understand, designed to run efficiently on standard CPUs.
 - **Tested on**: Windows 10/11, Python 3.8+
