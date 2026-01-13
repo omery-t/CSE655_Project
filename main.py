@@ -4,7 +4,7 @@ Lung Cancer Prediction
 Usage:
     python main.py train              # Train and compare all models (Fold)
     python main.py train --missing    # Train with missing values (Synthetic)
-    python main.py train --all        # Run both Fold and Synthetic
+    python main.py train --all        # Run both Fold and Synthetic comparisons
     python main.py predict            # Make predictions with saved model
     python main.py predict --model svm  # Use specific model for prediction
     python main.py list               # List available saved models
@@ -36,7 +36,7 @@ Usage: python main.py <command> [options]
 Commands:
   train              Train and compare all models (Fold)
   train --missing    Train with synthetic missing values (Synthetic)
-  train --all        Run both Fold and Synthetic
+  train --all        Run both Fold and Synthetic comparisons
   
   predict            Make predictions using saved model
   predict --model X  Use specific model (ann, svm, xgboost, rf)
@@ -48,7 +48,7 @@ Commands:
   report --reset     Reset report to initial state
 
 Examples:
-  python main.py train --all          # Run complete training pipeline
+  python main.py train --all          # Run complete training pipeline (Fold & Synthetic)
   python main.py predict              # Predict using best saved model
   python main.py report               # View consolidated results
 """)

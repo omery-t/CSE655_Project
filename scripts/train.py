@@ -3,9 +3,9 @@ Main training script for Lung Cancer Prediction.
 Implements 5-fold cross-validation for model comparison.
 
 Usage:
-    python train.py                    # Run Task 1 (original data)
-    python train.py --missing-values   # Run Task 2 (with missing values)
-    python train.py --all              # Run both tasks
+    python train.py                    # Run Fold Comparison (original data)
+    python train.py --missing-values   # Run Synthetic Comparison (with missing values)
+    python train.py --all              # Run both comparisons
 """
 
 import os
@@ -24,7 +24,7 @@ from models import get_model_by_name
 from utils import (
     calculate_metrics, print_results_table, 
     plot_model_comparison, plot_all_metrics, plot_cv_boxplot,
-    save_results_to_file
+    save_results_to_file, plot_training_history
 )
 from missing_values import inject_missing_values, impute_missing_values, get_missing_value_summary
 
@@ -113,7 +113,7 @@ def run_cross_validation(X, y, model_names=['ann', 'svm', 'xgboost', 'rf', 'lr',
     return results, cv_scores, cv_predictions
 
 
-def save_best_model(X, y, model_name, output_dir=None):
+def save_best_model(X, y, model_name, output_dir=None, prefix=''):
     """
     Train and save the best model on full dataset.
     
@@ -122,27 +122,29 @@ def save_best_model(X, y, model_name, output_dir=None):
         y: Target vector
         model_name: Name of the model to save
         output_dir: Directory to save model
+        prefix: Optional prefix for the filename
     """
     if output_dir is None:
         output_dir = MODELS_DIR
     
     os.makedirs(output_dir, exist_ok=True)
     
-    log.info(f"Saving best model ({model_name})...")
+    log.info(f"Saving best model ({model_name}) with prefix '{prefix}'...")
     
     model = get_model_by_name(model_name, input_dim=X.shape[1])
     model.fit(X, y)
     
-    model_path = os.path.join(output_dir, f'{model_name}_model.joblib')
+    filename = f'{prefix}{model_name}_model.joblib' if prefix else f'{model_name}_model.joblib'
+    model_path = os.path.join(output_dir, filename)
     joblib.dump(model, model_path)
     
     log.success(f"Model saved to: {model_path}")
     return model_path, model
 
 
-def run_task1(X, y, feature_names):
+def run_fold(X, y, feature_names):
     """
-    Task 1: Model comparison with original data.
+    Fold: Model comparison with original data.
     
     Args:
         X: Feature matrix
@@ -153,11 +155,11 @@ def run_task1(X, y, feature_names):
         results: Dictionary with model results
         cv_scores: Dictionary with per-fold scores
     """
-    log.header("TASK 1: Model Comparison (Original Data)")
+    log.header("FOLD COMPARISON: Model Comparison (Original Data)")
     
     results, cv_scores, cv_predictions = run_cross_validation(X, y)
     
-    print_results_table(results, "Task 1: Model Comparison Results")
+    print_results_table(results, "Fold Results: Model Comparison Results")
     
     best_model = max(results.keys(), key=lambda k: results[k]['mean']['accuracy'])
     log.success(f"Best Model: {best_model.upper()} (Accuracy: {results[best_model]['mean']['accuracy']:.4f})")
@@ -165,13 +167,13 @@ def run_task1(X, y, feature_names):
     plots_dir = os.path.join(BASE_DIR, 'results')
     os.makedirs(plots_dir, exist_ok=True)
     
-    plot_all_metrics(results, save_path=os.path.join(plots_dir, 'task1_metrics_comparison.png'))
+    plot_all_metrics(results, save_path=os.path.join(plots_dir, 'fold_metrics_comparison.png'))
     plot_cv_boxplot({k: v['accuracy'] for k, v in cv_scores.items()}, 
                     metric='accuracy',
-                    save_path=os.path.join(plots_dir, 'task1_cv_boxplot.png'))
+                    save_path=os.path.join(plots_dir, 'fold_cv_boxplot.png'))
     
-    save_results_to_file(results, 'results/task1_results.txt', 
-                        "Task 1: Model Comparison (Original Data)")
+    save_results_to_file(results, 'results/fold_results.txt', 
+                        "Fold Comparison (Original Data)")
     
     # Save best model trained on full data (for deployment/feature importance)
     model_path, best_model_instance = save_best_model(X, y, best_model)
@@ -183,14 +185,20 @@ def run_task1(X, y, feature_names):
     
     generate_all_plots(best_model_instance, y_true_cv, y_pred_cv, y_proba_cv, feature_names, best_model)
     
+    # Plot ANN training history if available (using best model if it's ANN or just retrain once)
+    log.info("Generating ANN training history plot...")
+    ann_model = get_model_by_name('ann', input_dim=X.shape[1])
+    ann_model.fit(X, y)
+    plot_training_history(ann_model.history, save_path=os.path.join(plots_dir, 'ann_training_history.png'))
+    
     update_training_section(results, best_model)
     
     return results, cv_scores, best_model
 
 
-def run_task2(X, y, feature_names):
+def run_synthetic(X, y, feature_names):
     """
-    Task 2: Model comparison with synthetic missing values.
+    Synthetic: Model comparison with synthetic missing values.
     
     Args:
         X: Feature matrix
@@ -201,7 +209,7 @@ def run_task2(X, y, feature_names):
         results: Dictionary with model results
         cv_scores: Dictionary with per-fold scores
     """
-    log.header("TASK 2: Model Comparison (With Missing Values)")
+    log.header("SYNTHETIC COMPARISON: Model Comparison (With Missing Values)")
     
     log.info("Injecting synthetic missing values...")
     X_missing, mask = inject_missing_values(X, percentage=0.10)
@@ -216,7 +224,7 @@ def run_task2(X, y, feature_names):
     
     results, cv_scores, _ = run_cross_validation(X_imputed, y)
     
-    print_results_table(results, "Task 2: Model Comparison Results (After Imputation)")
+    print_results_table(results, "Synthetic Comparison Results (After Imputation)")
     
     best_model = max(results.keys(), key=lambda k: results[k]['mean']['accuracy'])
     log.success(f"Best Model: {best_model.upper()} (Accuracy: {results[best_model]['mean']['accuracy']:.4f})")
@@ -224,18 +232,23 @@ def run_task2(X, y, feature_names):
     plots_dir = os.path.join(BASE_DIR, 'results')
     os.makedirs(plots_dir, exist_ok=True)
     
-    plot_all_metrics(results, save_path=os.path.join(plots_dir, 'task2_metrics_comparison.png'))
+    plot_all_metrics(results, save_path=os.path.join(plots_dir, 'synthetic_metrics_comparison.png'))
     plot_cv_boxplot({k: v['accuracy'] for k, v in cv_scores.items()}, 
                     metric='accuracy',
-                    save_path=os.path.join(plots_dir, 'task2_cv_boxplot.png'))
+                    save_path=os.path.join(plots_dir, 'synthetic_cv_boxplot.png'))
     
-    save_results_to_file(results, 'results/task2_results.txt', 
-                        "Task 2: Model Comparison (With Missing Values)")
+    save_results_to_file(results, 'results/synthetic_results.txt', 
+                        "Synthetic Comparison (With Missing Values)")
+    
+    # Save best synthetic model
+    save_best_model(X_imputed, y, best_model, prefix='synthetic_')
     
     update_missing_values_section(
         summary['rows_affected'],
         summary['rows_affected_percentage'],
-        'KNN Imputer (k=5)'
+        'KNN Imputer (k=5)',
+        results=results,
+        best_model=best_model
     )
     
     return results, cv_scores, best_model
@@ -245,9 +258,9 @@ def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Lung Cancer Prediction Model Training')
     parser.add_argument('--missing-values', action='store_true', 
-                        help='Run Task 2 with missing values')
+                        help='Run Synthetic Comparison with missing values')
     parser.add_argument('--all', action='store_true',
-                        help='Run both Task 1 and Task 2')
+                        help='Run both Fold and Synthetic Comparisons')
     args = parser.parse_args()
     
     # Load and preprocess data
@@ -257,33 +270,33 @@ def main():
     log.result("Class distribution", f"{np.bincount(y.astype(int))}")
     
     if args.all:
-        log.header("RUNNING BOTH TASKS")
+        log.header("RUNNING BOTH COMPARISONS")
         
-        results1, cv1, best1 = run_task1(X, y, feature_names)
-        results2, cv2, best2 = run_task2(X, y, feature_names)
+        results_fold, cv_fold, best_fold = run_fold(X, y, feature_names)
+        results_syn, cv_syn, best_syn = run_synthetic(X, y, feature_names)
         
-        log.header("SUMMARY: Task 1 vs Task 2 Comparison")
+        log.header("SUMMARY: Fold vs Synthetic Comparison")
         
-        log.print(f"\n{'Model':<15} {'Task 1 Acc':<15} {'Task 2 Acc':<15} {'Difference':<15}")
+        log.print(f"\n{'Model':<15} {'Fold Acc':<15} {'Synthetic Acc':<15} {'Difference':<15}")
         log.print("-" * 60)
         
-        for model in results1.keys():
-            acc1 = results1[model]['mean']['accuracy']
-            acc2 = results2[model]['mean']['accuracy']
+        for model in results_fold.keys():
+            acc1 = results_fold[model]['mean']['accuracy']
+            acc2 = results_syn[model]['mean']['accuracy']
             diff = acc2 - acc1
             sign = '+' if diff >= 0 else ''
             log.print(f"{model:<15} {acc1:.4f}{'':<10} {acc2:.4f}{'':<10} {sign}{diff:.4f}")
         
         log.print("-" * 60)
-        log.print(f"Best Task 1: {best1.upper()}")
-        log.print(f"Best Task 2: {best2.upper()}")
+        log.print(f"Best Fold: {best_fold.upper()}")
+        log.print(f"Best Synthetic: {best_syn.upper()}")
         
     elif args.missing_values:
-        # Run only Task 2
-        run_task2(X, y, feature_names)
+        # Run only Synthetic
+        run_synthetic(X, y, feature_names)
     else:
-        # Run only Task 1
-        run_task1(X, y, feature_names)
+        # Run only Fold
+        run_fold(X, y, feature_names)
     
     log.header("Training Complete!")
     log.success(f"Results saved to: {os.path.join(BASE_DIR, 'results')}")

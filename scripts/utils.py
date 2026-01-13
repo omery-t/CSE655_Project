@@ -196,6 +196,34 @@ def plot_cv_boxplot(cv_scores, metric='accuracy', save_path=None):
     plt.close()
 
 
+def plot_training_history(history, save_path=None):
+    """
+    Plot training and validation loss history.
+    
+    Args:
+        history: Dictionary containing 'loss' and optionally 'val_loss' lists
+        save_path: Path to save the figure
+    """
+    plt.figure(figsize=(10, 6))
+    plt.plot(history['loss'], label='Training Loss', color='blue', linewidth=2)
+    if 'val_loss' in history and history['val_loss']:
+        plt.plot(history['val_loss'], label='Validation Loss', color='orange', linestyle='--', linewidth=2)
+    
+    plt.xlabel('Epoch', fontsize=12)
+    plt.ylabel('Loss', fontsize=12)
+    plt.title('ANN Training History (Early Stopping Active)', fontsize=14)
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    if save_path:
+        plt.savefig(save_path, dpi=150, bbox_inches='tight')
+        log.success(f"Training history plot saved to: {save_path}")
+    
+    plt.close()
+
+
 def save_results_to_file(results, filename, title="Results"):
     """
     Save results to a text file.

@@ -16,10 +16,15 @@ RANDOM_SEED = 42
 # Cross-validation settings
 N_FOLDS = 5
 
-# ANN Hyperparameters (using scikit-learn MLPClassifier)
+# ANN Hyperparameters (using custom PyTorch architecture)
 ANN_CONFIG = {
-    'layers': [256, 128, 128],  # Hidden layer sizes (total 512 nodes > 500 required)
-    'epochs': 500,  # max_iter for MLPClassifier
+    'layers': [16, 8],     # "Minimalist" architecture to prevent overfitting
+    'dropout_rate': 0.3, 
+    'learning_rate': 0.0005,
+    'weight_decay': 1e-2,  # Strong L2 regularization
+    'batch_size': 16,      # Smaller batch for more gradients updates
+    'epochs': 500,
+    'random_state': RANDOM_SEED,
 }
 
 # SVM Hyperparameters

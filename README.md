@@ -30,7 +30,7 @@ python main.py train
 # Train with synthetic missing values (Synthetic)
 python main.py train --missing
 
-# Run complete pipeline
+# Run complete pipeline (Fold & Synthetic)
 python main.py train --all
 ```
 

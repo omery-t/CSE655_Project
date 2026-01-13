@@ -20,9 +20,9 @@ from helpers.logger import log
 # Section markers
 SECTIONS = {
     'HEADER': '=' * 70,
-    'TRAINING': '[TRAINING]',
+    'TRAINING': '[FOLD RESULTS]',
     'PREDICTION': '[PREDICTION]',
-    'MISSING_VALUES': '[MISSING VALUES]',
+    'MISSING_VALUES': '[SYNTHETIC RESULTS]',
     'SYSTEM_INFO': '[SYSTEM INFO]'
 }
 
@@ -204,20 +204,36 @@ def update_prediction_section(total_samples, predicted_yes, predicted_no, accura
     update_section('PREDICTION', lines)
 
 
-def update_missing_values_section(rows_affected, percentage, imputation_method):
+def update_missing_values_section(rows_affected, percentage, imputation_method, results=None, best_model=None):
     """
-    Update the MISSING VALUES section with imputation stats.
+    Update the MISSING VALUES section with imputation stats and model results.
     
     Args:
         rows_affected: Number of rows with missing values
         percentage: Percentage of rows affected
         imputation_method: Method used for imputation
+        results: Optional dictionary with model results
+        best_model: Optional name of best performing model
     """
     lines = [
         f"Rows Affected: {rows_affected} ({percentage:.1f}%)",
         f"Imputation Method: {imputation_method}",
         "Status: Successfully imputed",
     ]
+    
+    if results and best_model:
+        lines.append("")
+        lines.append(f"Best Model (Synthetic): {best_model.upper()}")
+        lines.append("")
+        lines.append("Model Performance (After Imputation):")
+        lines.append("-" * 45)
+        lines.append(f"{'Model':<12} {'Accuracy':<12} {'F1-Score':<12} {'AUC-ROC':<12}")
+        
+        for model_name, metrics in results.items():
+            acc = metrics['mean']['accuracy']
+            f1 = metrics['mean']['f1']
+            auc_val = metrics['mean'].get('auc_roc', 0)
+            lines.append(f"{model_name:<12} {acc:.4f}       {f1:.4f}       {auc_val:.4f}")
     
     update_section('MISSING_VALUES', lines)
 
