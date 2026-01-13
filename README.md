@@ -24,10 +24,10 @@ A machine learning project comparing four classification models for lung cancer 
 
 ### Training (Steps to run)
 ```bash
-# Train models on original data (Task 1)
+# Train models on original data (Fold)
 python main.py train
 
-# Train with synthetic missing values (Task 2)
+# Train with synthetic missing values (Synthetic)
 python main.py train --missing
 
 # Run complete pipeline

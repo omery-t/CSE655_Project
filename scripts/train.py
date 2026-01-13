@@ -34,7 +34,7 @@ from helpers.report_manager import update_training_section, update_missing_value
 from helpers.logger import log
 
 
-def run_cross_validation(X, y, model_names=['ann', 'svm', 'xgboost', 'rf'], n_folds=N_FOLDS):
+def run_cross_validation(X, y, model_names=['ann', 'svm', 'xgboost', 'rf', 'lr', 'knn', 'nb', 'et', 'voting', 'stacking'], n_folds=N_FOLDS):
     """
     Run k-fold cross-validation for all models.
     

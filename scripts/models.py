@@ -11,11 +11,18 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, VotingClassifier, StackingClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
 from xgboost import XGBClassifier
 
-from config import ANN_CONFIG, SVM_CONFIG, XGBOOST_CONFIG, RF_CONFIG, RANDOM_SEED
+from config import (
+    ANN_CONFIG, SVM_CONFIG, XGBOOST_CONFIG, RF_CONFIG, 
+    LR_CONFIG, KNN_CONFIG, NB_CONFIG, ET_CONFIG, ENSEMBLE_CONFIG,
+    RANDOM_SEED
+)
 
 import sys
 import os
@@ -55,46 +62,72 @@ def create_ann_model(input_dim=None, config=None):
 
 
 def create_svm_model(config=None):
-    """
-    Create SVM classifier.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        SVC instance
-    """
+    """Create SVM classifier."""
     config = config or SVM_CONFIG
     return SVC(**config, random_state=RANDOM_SEED)
 
 
 def create_xgboost_model(config=None):
-    """
-    Create XGBoost classifier.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        XGBClassifier instance
-    """
+    """Create XGBoost classifier."""
     config = config or XGBOOST_CONFIG.copy()
     config.pop('use_label_encoder', None)
     return XGBClassifier(**config)
 
 
 def create_rf_model(config=None):
-    """
-    Create Random Forest classifier.
-    
-    Args:
-        config: Configuration dictionary
-        
-    Returns:
-        RandomForestClassifier instance
-    """
+    """Create Random Forest classifier."""
     config = config or RF_CONFIG
     return RandomForestClassifier(**config)
+
+
+def create_lr_model(config=None):
+    """Create Logistic Regression classifier."""
+    config = config or LR_CONFIG
+    return LogisticRegression(**config)
+
+
+def create_knn_model(config=None):
+    """Create KNN classifier."""
+    config = config or KNN_CONFIG
+    return KNeighborsClassifier(**config)
+
+
+def create_nb_model(config=None):
+    """Create Naive Bayes classifier."""
+    config = config or NB_CONFIG
+    return GaussianNB(**config)
+
+
+def create_et_model(config=None):
+    """Create Extra Trees classifier."""
+    config = config or ET_CONFIG
+    return ExtraTreesClassifier(**config)
+
+
+def create_voting_model(models=None):
+    """Create Voting Classifier."""
+    if models is None:
+        # Default ensemble
+        models = [
+            ('ann', create_ann_model()),
+            ('rf', create_rf_model()),
+            ('svm', create_svm_model())
+        ]
+    return VotingClassifier(estimators=models, voting=ENSEMBLE_CONFIG['voting'])
+
+
+def create_stacking_model(models=None, final_estimator=None):
+    """Create Stacking Classifier."""
+    if models is None:
+        models = [
+            ('ann', create_ann_model()),
+            ('rf', create_rf_model()),
+            ('svm', create_svm_model())
+        ]
+    if final_estimator is None:
+        final_estimator = LogisticRegression()
+    
+    return StackingClassifier(estimators=models, final_estimator=final_estimator)
 
 
 def get_model_by_name(name, input_dim=None):
@@ -102,7 +135,7 @@ def get_model_by_name(name, input_dim=None):
     Get model by name.
     
     Args:
-        name: Model name ('ann', 'svm', 'xgboost', 'rf')
+        name: Model name ('ann', 'svm', 'xgboost', 'rf', 'lr', 'knn', 'nb', 'et', 'voting', 'stacking')
         input_dim: Number of input features (optional, for compatibility)
         
     Returns:
@@ -118,6 +151,18 @@ def get_model_by_name(name, input_dim=None):
         return create_xgboost_model()
     elif name == 'rf':
         return create_rf_model()
+    elif name == 'lr':
+        return create_lr_model()
+    elif name == 'knn':
+        return create_knn_model()
+    elif name == 'nb':
+        return create_nb_model()
+    elif name == 'et':
+        return create_et_model()
+    elif name == 'voting':
+        return create_voting_model()
+    elif name == 'stacking':
+        return create_stacking_model()
     else:
         raise ValueError(f"Unknown model: {name}")
 

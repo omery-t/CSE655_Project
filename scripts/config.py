@@ -54,3 +54,33 @@ MISSING_VALUE_CONFIG = {
     'percentage': 0.10,  # 10% of training rows
     'n_features_to_null': 1  # Number of features to set NULL per row
 }
+
+# Logistic Regression Hyperparameters
+LR_CONFIG = {
+    'max_iter': 1000,
+    'random_state': RANDOM_SEED,
+    'solver': 'lbfgs'
+}
+
+# KNN Hyperparameters
+KNN_CONFIG = {
+    'n_neighbors': 5,
+    'weights': 'uniform',
+    'metric': 'minkowski'
+}
+
+# Naive Bayes Hyperparameters
+NB_CONFIG = {}  # GaussianNB doesn't have many hyperparameters to tune
+
+# Extra Trees Hyperparameters
+ET_CONFIG = {
+    'n_estimators': 100,
+    'max_depth': None,
+    'min_samples_split': 2,
+    'random_state': RANDOM_SEED
+}
+
+# Ensemble Configuration
+ENSEMBLE_CONFIG = {
+    'voting': 'soft',  # 'hard' or 'soft'
+}

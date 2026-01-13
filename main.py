@@ -1,13 +1,10 @@
 """
-Lung Cancer Prediction - Main Entry Point
-
-This is the main entry point for the project.
-Run this file from the project root directory.
+Lung Cancer Prediction
 
 Usage:
-    python main.py train              # Train and compare all models (Task 1)
-    python main.py train --missing    # Train with missing values (Task 2)
-    python main.py train --all        # Run both Task 1 and Task 2
+    python main.py train              # Train and compare all models (Fold)
+    python main.py train --missing    # Train with missing values (Synthetic)
+    python main.py train --all        # Run both Fold and Synthetic
     python main.py predict            # Make predictions with saved model
     python main.py predict --model svm  # Use specific model for prediction
     python main.py list               # List available saved models
@@ -37,9 +34,9 @@ def print_usage():
 Usage: python main.py <command> [options]
 
 Commands:
-  train              Train and compare all models (Task 1)
-  train --missing    Train with synthetic missing values (Task 2)
-  train --all        Run both Task 1 and Task 2
+  train              Train and compare all models (Fold)
+  train --missing    Train with synthetic missing values (Synthetic)
+  train --all        Run both Fold and Synthetic
   
   predict            Make predictions using saved model
   predict --model X  Use specific model (ann, svm, xgboost, rf)
